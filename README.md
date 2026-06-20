@@ -7,13 +7,15 @@ Los bloques matemáticos que lo sostienen son simples pero poderosos: funciones 
 ---
 
 <details>
-<summary>📘 Tarea 1.1 — Math Warm-Up</summary>
+<summary>📁 1er_Tarea</summary>
 
-## Tarea 1.1 — Math Warm-Up
+## 1er_Tarea
+
+### 📘 1.1 — Math Warm-Up
 
 Notebook de calentamiento matemático que cubre los conceptos fundamentales necesarios para entender cómo funciona una red neuronal desde adentro.
 
-### Temas cubiertos
+**Temas cubiertos**
 
 **1. Funciones lineales en 1D**
 Implementación de $y = \beta + \omega x$, donde $\beta$ es el intercepto y $\omega$ la pendiente. Se exploró el efecto de cada parámetro sobre la recta.
@@ -42,13 +44,15 @@ Extensión de la derivada a múltiples variables. Visualización del campo gradi
 ---
 
 <details>
-<summary>📗 Tarea 1.2 — Regresión Lineal</summary>
+<summary>📁 2da_Tarea</summary>
 
-## Tarea 1.2 — Regresión Lineal
+## 2da_Tarea
+
+### 📗 1.2 — Regresión Lineal
 
 Notebook que introduce el modelo de regresión lineal 1D y la función de pérdida de mínimos cuadrados, sentando las bases del entrenamiento supervisado.
 
-### Temas cubiertos
+**Temas cubiertos**
 
 **1. Modelo de regresión lineal 1D**
 Implementación de $f(x, \phi_0, \phi_1) = \phi_0 + \phi_1 x$, donde $\phi_0$ es el intercepto y $\phi_1$ la pendiente. Se generalizó la notación de $\beta/\omega$ a $\phi_0/\phi_1$, que es la convención usada en el resto del curso.
@@ -66,18 +70,11 @@ Optimización manual e implementación automática del descenso coordinado: se a
 **4. Visualización de la superficie de pérdida**
 Generación del mapa de calor de $L[\phi_0, \phi_1]$ sobre una grilla 2D de parámetros. Se identifica el mínimo global y se verifica que los parámetros encontrados por descenso coordinado se acercan a él.
 
-</details>
-
----
-
-<details>
-<summary>📙 Tarea 2.1 — Redes Neuronales Superficiales</summary>
-
-## Tarea 2.1 — Redes Neuronales Superficiales
+### 📙 2.1 — Redes Neuronales Superficiales
 
 Notebook que construye y explora redes neuronales de una sola capa oculta (shallow networks), partiendo de la función de activación ReLU hasta arquitecturas con múltiples entradas y salidas.
 
-### Temas cubiertos
+**Temas cubiertos**
 
 **1. Función de activación ReLU**
 Implementación de $\text{ReLU}(z) = \max(0, z)$ usando `np.maximum`. Es la función de activación más utilizada en redes modernas: devuelve 0 para entradas negativas (neurona "apagada") y el valor sin cambios para entradas positivas (neurona "activa").
@@ -104,5 +101,83 @@ Las fronteras donde $\text{pre}_i = 0$ son líneas rectas que dividen el plano d
 
 **6. Red neuronal (2 entradas, 2 salidas, 3 neuronas ocultas)**
 Arquitectura con dos salidas que comparten las mismas preactivaciones y activaciones, pero con conjuntos de pesos de salida independientes $\{\phi_{1x}\}$ y $\{\phi_{2x}\}$. Ambas salidas tienen la misma estructura de politopos pero diferente forma dentro de cada región.
+
+</details>
+
+---
+
+<details>
+<summary>📁 3ra_Tarea</summary>
+
+## 3ra_Tarea
+
+### 📕 2.2 — Composing Neural Networks
+
+Notebook que explora qué ocurre al **componer** (encadenar) redes superficiales, alimentando la salida de una red como entrada de otra.
+
+**Temas cubiertos**
+
+**1. Composición de dos redes superficiales**
+Se alimenta la salida de la Red 1 como entrada de la Red 2: `net12_out = shallow_1_1_3(net1_out, ...)`. La curva resultante muestra más segmentos lineales que cualquiera de las dos redes por separado.
+
+**2. Efecto de modificar los parámetros de salida ($\phi$)**
+Invertir el signo de un peso de salida de la Red 2 cambia la forma de uno de sus segmentos, alterando la composición final en las regiones donde la salida de la Red 1 cae dentro de ese segmento.
+
+**3. Efecto de escalar los parámetros de salida de la primera red**
+Reducir la amplitud de la Red 1 comprime el rango de entrada que llega a la Red 2, recorriendo una porción más pequeña de su dominio.
+
+**4. Composición de una red consigo misma**
+Al encadenar la Red 1 con una copia idéntica de sí misma, la no linealidad de la ReLU genera más puntos de quiebre que la red original.
+
+**5. Crecimiento exponencial de regiones lineales**
+Al encadenar $N$ copias de una red de 3 neuronas (hasta 4 segmentos cada una) antes de una red final, el número máximo de regiones lineales crece como $4^{N+1}$ — la idea central detrás del poder expresivo de las redes profundas con pocos parámetros.
+
+### 📕 2.3 — Deep Neural Networks
+
+Notebook que introduce la **notación matricial** para redes neuronales y la extiende a arquitecturas profundas con múltiples capas ocultas.
+
+**Temas cubiertos**
+
+**1. Forma matricial de una red superficial**
+Implementación de la ecuación 4.15: $\mathbf{h}_1 = \text{ReLU}(\boldsymbol\beta_0 + \boldsymbol\Omega_0 \mathbf{x})$, $y = \boldsymbol\beta_1 + \boldsymbol\Omega_1 \mathbf{h}_1$, agrupando los parámetros $\theta$ y $\phi$ en matrices y vectores.
+
+**2. Composición de dos redes en forma matricial**
+Se deriva cómo los parámetros $\phi$ de la primera red se "absorben" dentro de $\boldsymbol\beta_1$ y $\boldsymbol\Omega_1$ de la segunda red al componerlas. Verificado numéricamente: la composición matricial coincide con la versión escalar con un error del orden de $10^{-16}$ (precisión de punto flotante).
+
+**3. Red profunda de 3 capas ocultas**
+Construcción de una red con $D_i=4$ entradas, capas ocultas de tamaños $D_1=5$, $D_2=2$, $D_3=4$, y $D_o=1$ salida. Se determinaron las formas correctas de cada matriz $\boldsymbol\beta_k$ ($D_k \times 1$) y $\boldsymbol\Omega_k$ ($D_k \times D_{k-1}$).
+
+### 📕 2.4.1 — Loss Function I (Regresión con ruido gaussiano)
+
+Notebook que deriva la función de pérdida de mínimos cuadrados a partir de primeros principios estadísticos, asumiendo ruido gaussiano en las observaciones.
+
+**Temas cubiertos**
+
+**1. Distribución normal**
+Implementación directa de la densidad gaussiana (ecuación 5.7): $\text{Pr}(y\mid\mu,\sigma) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y-\mu)^2}{2\sigma^2}\right)$.
+
+**2. Likelihood**
+Cálculo de la likelihood conjunta de los datos como el producto de las probabilidades individuales: $L(\boldsymbol\phi) = \prod_i \text{Pr}(y_i\mid\mu_i,\sigma)$.
+
+**3. Log-likelihood negativa**
+Conversión del producto de probabilidades en una suma de logaritmos para evitar subdesbordamiento numérico: $-\log L(\boldsymbol\phi) = -\sum_i \log\text{Pr}(y_i\mid\mu_i,\sigma)$.
+
+**4. Suma de cuadrados**
+Implementación de la pérdida clásica de mínimos cuadrados y comprobación de que **maximizar la likelihood gaussiana, minimizar la log-likelihood negativa y minimizar la suma de cuadrados son equivalentes**: las tres métricas convergen exactamente en el mismo valor óptimo del parámetro.
+
+### 📕 2.4.2 — Loss Function II (Clasificación binaria)
+
+Notebook que extiende el marco de máxima verosimilitud al caso de clasificación binaria, derivando la entropía cruzada como función de pérdida.
+
+**Temas cubiertos**
+
+**1. Función sigmoide**
+Implementación de $\text{sig}(z) = \frac{1}{1+e^{-z}}$, que transforma la salida arbitraria de la red en una probabilidad $\lambda \in (0,1)$.
+
+**2. Distribución de Bernoulli**
+Implementación de $\text{Pr}(y\mid\lambda) = \lambda^{y}(1-\lambda)^{1-y}$, que da la probabilidad de la clase observada dado el parámetro predicho por la red.
+
+**3. Likelihood y log-likelihood negativa**
+Cálculo de la likelihood conjunta y su versión logarítmica negativa, que resulta ser exactamente la **entropía cruzada binaria** — la función de pérdida estándar para clasificación binaria en redes neuronales.
 
 </details>
