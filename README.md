@@ -298,3 +298,64 @@ Actualización por coordenada $m_t=g_t$, $v_t=g_t^2$, $\boldsymbol\phi_{t+1}=\bo
 Promedios móviles del gradiente y del gradiente al cuadrado, $m_t=\beta m_{t-1}+(1-\beta)g_t$ y $v_t=\gamma v_{t-1}+(1-\gamma)g_t^2$, con corrección de sesgo $\hat m_t = m_t/(1-\beta^t)$, $\hat v_t = v_t/(1-\gamma^t)$ — necesaria porque $m_0=v_0=0$ sesgan las primeras iteraciones hacia cero. Actualización final: $\boldsymbol\phi_{t+1}=\boldsymbol\phi_t-\alpha\,\hat m_t/(\sqrt{\hat v_t}+\epsilon)$.
 
 </details>
+
+
+---
+
+<details>
+<summary>📁 5ta_Tarea</summary>
+
+## 5ta_Tarea
+
+### 📓 6.1 — Convolución 1D
+
+Notebook que implementa desde cero, sin usar rutinas de biblioteca, la operación de convolución 1D en sus distintas variantes de kernel, paso y dilatación.
+
+**Temas cubiertos**
+
+**1. Convolución con kernel 3, paso 1, dilatación 1**
+Implementación con relleno de ceros: cada salida combina el punto actual con sus dos vecinos inmediatos, ponderados por los pesos del kernel $\omega$.
+
+**2. Convolución con kernel 3, paso 2, dilatación 1**
+El centro del kernel para la salida $i$ cae en la posición de entrada $2i$; se verificó que el resultado coincide exactamente con tomar uno de cada dos valores de la convolución equivalente con paso 1.
+
+**3. Convolución con kernel 5, paso 1, dilatación 1**
+Kernel más ancho: el offset del filtro va de $-2$ a $+2$ alrededor de cada posición.
+
+**4. Convolución con kernel 3, paso 1, dilatación 2**
+Se deja un hueco entre elementos consecutivos del filtro: el offset avanza de dos en dos ($-2, 0, +2$) en vez de uno en uno.
+
+**5. Representación matricial de la convolución**
+Construcción de la matriz de convolución $\boldsymbol\Omega$ (kernel 3, paso 1) colocando los pesos alrededor de la diagonal en cada fila. Se comprobó que $\boldsymbol\Omega\mathbf{x}$ produce exactamente el mismo resultado que la convolución calculada directamente.
+
+### 📓 6.2 — Convolución para MNIST-1D
+
+Notebook que construye y entrena una red convolucional 1D sobre el dataset sintético MNIST-1D, comparándola contra el enfoque totalmente conectado.
+
+**Temas cubiertos**
+
+**1. Arquitectura convolucional**
+Construcción de la red con `torch.nn`: tres capas `Conv1d` (kernel 3, paso 2, sin relleno) intercaladas con `ReLU`, seguidas de `Flatten` y una capa `Linear` final. Se verificó a mano cómo se reduce la longitud de la secuencia en cada capa: $40 \to 19 \to 9 \to 4$, dando $4\times 15=60$ valores antes de la capa lineal.
+
+**2. Entrenamiento**
+Entrenamiento con `CrossEntropyLoss`, optimizador SGD con momentum y un *scheduler* que reduce la tasa de aprendizaje a la mitad cada 20 épocas. A lo largo de 100 épocas el error de validación bajó de ~77% a ~9%, confirmando que la arquitectura aprende correctamente.
+
+### 📓 6.3 — Convolución 2D
+
+Notebook que implementa la convolución 2D en NumPy en cuatro niveles progresivos de complejidad, validando cada uno contra `torch.nn.functional.conv2d`.
+
+**Temas cubiertos**
+
+**1. Convolución 2D básica**
+Un canal de entrada, un canal de salida, una sola imagen: recorrido anidado sobre alto y ancho de la salida, y sobre alto y ancho del kernel.
+
+**2. Convolución con paso (stride)**
+Se generaliza el índice de la imagen a `c_y * stride + c_kernel_y` (y análogo en x), permitiendo pasos mayores a 1.
+
+**3. Múltiples canales de entrada y salida**
+Se añaden los recorridos sobre canal de entrada y canal de salida, acumulando la suma sobre todos los canales de entrada para cada canal de salida.
+
+**4. Convolución completa (batch, multicanal, con paso)**
+Versión final que añade el recorrido sobre el tamaño de lote (batch), quedando equivalente a una capa `Conv2d` estándar. En los cuatro niveles, el error absoluto medio contra PyTorch fue del orden de $10^{-7}$, confirmando la correcta implementación.
+
+</details>
