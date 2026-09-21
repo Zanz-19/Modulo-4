@@ -181,3 +181,120 @@ Implementación de $\text{Pr}(y\mid\lambda) = \lambda^{y}(1-\lambda)^{1-y}$, que
 Cálculo de la likelihood conjunta y su versión logarítmica negativa, que resulta ser exactamente la **entropía cruzada binaria** — la función de pérdida estándar para clasificación binaria en redes neuronales.
 
 </details>
+
+---
+
+<details>
+<summary>📁 4ta_Tarea</summary>
+
+## 4ta_Tarea
+
+### 📕 2.4.3 — Loss Function III (Clasificación multiclase)
+
+Notebook que cierra la serie de funciones de pérdida derivadas por máxima verosimilitud, extendiendo el marco de Bernoulli a múltiples clases mediante la distribución categórica.
+
+**Temas cubiertos**
+
+**1. Función softmax**
+Implementación de $\text{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_j e^{z_j}}$, aplicada por columna, con resta del máximo para estabilidad numérica y evitar overflow en `np.exp`. Transforma las salidas arbitrarias de la red en probabilidades no negativas que suman uno.
+
+**2. Distribución categórica**
+Implementación de $\text{Pr}(y=k\mid\boldsymbol\lambda) = \lambda_k$, que devuelve la probabilidad de la clase observada según los parámetros predichos por la red.
+
+**3. Likelihood**
+Cálculo de la likelihood conjunta como el producto de las probabilidades categóricas de cada punto: $L(\boldsymbol\phi) = \prod_i \text{Pr}(y_i\mid\boldsymbol\lambda_i)$.
+
+**4. Log-likelihood negativa**
+Conversión a suma de logaritmos negativos para evitar el subdesbordamiento numérico que produce el producto de muchas probabilidades pequeñas: $-\log L(\boldsymbol\phi) = -\sum_i \log\text{Pr}(y_i\mid\boldsymbol\lambda_i)$.
+
+**5. Verificación del óptimo**
+Barrido del parámetro $\beta_1$ manteniendo el resto fijo, graficando likelihood y NLL en función de su valor. Se comprueba que **el máximo de la likelihood y el mínimo de la NLL ocurren exactamente en el mismo punto**, confirmando por qué en la práctica se optimiza la NLL en vez de la likelihood directa.
+
+### 📗 3.1 — Optimización I (Descenso por gradiente sobre un modelo Gabor)
+
+Notebook exploratorio que anima el proceso de descenso por gradiente sobre un modelo no convexo, para observar de forma visual e intuitiva el efecto de la tasa de aprendizaje.
+
+**Temas cubiertos**
+
+**1. Modelo y datos sintéticos**
+Ajuste de una función tipo Gabor $f(x,\phi_0,\phi_1) = \sin(z)\cdot e^{-z^2/8}$, con $z = \phi_0 + 0.06\,\phi_1 x$, sobre datos generados con parámetros verdaderos conocidos más ruido gaussiano.
+
+**2. Gradiente analítico**
+Derivación de $\partial L/\partial\phi_0$ y $\partial L/\partial\phi_1$ vía regla de la cadena sobre $z$, para la pérdida MSE $L = \tfrac{1}{2}\text{mean}(r^2)$.
+
+**3. Animación del descenso**
+Visualización simultánea de la trayectoria de los parámetros sobre las curvas de nivel de la superficie de pérdida (panel izquierdo) y el ajuste del modelo a los datos conforme avanzan las iteraciones (panel derecho).
+
+**4. Efecto de la tasa de aprendizaje**
+Experimentación con distintos puntos iniciales y tasas de aprendizaje (`lr`). Se comprobó que un `lr` muy pequeño converge de forma estable pero lenta, uno intermedio ofrece el mejor equilibrio entre velocidad y estabilidad, y uno demasiado alto introduce oscilaciones notorias en la trayectoria de los parámetros — comportamiento verificado corriendo el experimento con varias semillas de ruido.
+
+### 📙 4.1 — Descenso por gradiente
+
+Notebook que implementa desde cero el algoritmo de descenso por gradiente para ajustar un modelo lineal simple, incluyendo búsqueda lineal para el tamaño de paso.
+
+**Temas cubiertos**
+
+**1. Modelo lineal y pérdida de suma de cuadrados**
+Implementación de $f(x,\boldsymbol\phi) = \phi_0 + \phi_1 x$ y $L(\boldsymbol\phi) = \sum_i(f(x_i,\boldsymbol\phi)-y_i)^2$, verificada contra un valor de referencia conocido.
+
+**2. Gradiente analítico**
+Derivación de $\partial L/\partial\phi_0 = 2\sum_i(\hat y_i - y_i)$ y $\partial L/\partial\phi_1 = 2\sum_i(\hat y_i-y_i)x_i$, verificado con diferencias finitas.
+
+**3. Búsqueda lineal**
+Rutina que evalúa la pérdida en varios puntos a lo largo de la dirección de descenso para elegir el tamaño de paso $\alpha$ que la minimiza, en vez de fijar un valor arbitrario.
+
+**4. Paso de descenso por gradiente**
+Ensamble de los pasos anteriores: calcular el gradiente, encontrar $\alpha$ óptimo por búsqueda lineal, y actualizar $\boldsymbol\phi \leftarrow \boldsymbol\phi - \alpha\nabla L$. Se visualiza la trayectoria de los parámetros sobre la superficie de pérdida a lo largo de las iteraciones.
+
+### 📙 4.2 — Descenso por gradiente estocástico
+
+Notebook que compara distintas variantes del descenso por gradiente sobre un modelo Gabor no convexo: búsqueda lineal, paso fijo, mini-batch y *scheduler* de tasa de aprendizaje.
+
+**Temas cubiertos**
+
+**1. Modelo Gabor y su gradiente**
+Implementación de la pérdida de suma de cuadrados sobre $f(x,\boldsymbol\phi)=\sin(z)e^{-z^2/32}$, con $z=\phi_0+0.06\phi_1 x$, y derivación explícita de $\partial L/\partial\phi_0$ y $\partial L/\partial\phi_1$ vía regla de la cadena.
+
+**2. Descenso con búsqueda lineal**
+Reutilización de la búsqueda lineal para elegir $\alpha$ en cada paso; se observa que, al ser la superficie no convexa, **el punto de convergencia depende de la inicialización** (distintos valles/mínimos locales).
+
+**3. Descenso con paso fijo**
+Actualización $\boldsymbol\phi \leftarrow \boldsymbol\phi - \alpha\nabla L$ sin búsqueda lineal. Se comprobó que un $\alpha$ alto provoca oscilaciones que saltan las zonas de baja pérdida, mientras que uno muy bajo converge de forma estable pero lenta.
+
+**4. Mini-batch SGD**
+Estimación del gradiente usando solo un subconjunto aleatorio de los datos ($\mathcal{B}_t$) en cada paso, mediante `np.random.permutation`. Batches pequeños introducen más variabilidad en la trayectoria pero permiten más actualizaciones por época; batches grandes se acercan más al gradiente completo.
+
+**5. Scheduler de tasa de aprendizaje**
+Reducción de $\alpha$ por un factor $\beta$ cada $M$ iteraciones, sacrificando exploración al final del entrenamiento para ganar estabilidad y evitar saltos grandes cerca del mínimo.
+
+### 📘 4.3 — Momentum
+
+Notebook que compara SGD estándar, Momentum y Momentum de Nesterov sobre el mismo modelo Gabor no convexo.
+
+**Temas cubiertos**
+
+**1. SGD estándar (referencia)**
+Actualización directa $\boldsymbol\phi \leftarrow \boldsymbol\phi - \alpha\, g_t$ usando el gradiente de un mini-batch aleatorio, como línea base de comparación.
+
+**2. Momentum**
+Implementación de la velocidad acumulada $m_t = \beta m_{t-1} + (1-\beta)g_t$ y actualización $\boldsymbol\phi_{t+1} = \boldsymbol\phi_t - \alpha m_t$. El promedio móvil del gradiente suaviza la trayectoria y reduce las oscilaciones típicas del SGD puro.
+
+**3. Momentum de Nesterov**
+Variante que evalúa el gradiente en una posición **adelantada** por la velocidad acumulada previa ($\boldsymbol\phi_t - \alpha\beta m_{t-1}$) antes de actualizar $m_t$, anticipando hacia dónde se moverá el parámetro. En este experimento no superó a Momentum estándar.
+
+### 📔 4.4 — Adam
+
+Notebook que construye el optimizador Adam paso a paso, partiendo de descenso con paso fijo, pasando por gradientes normalizados por coordenada, hasta el algoritmo completo con corrección de sesgo.
+
+**Temas cubiertos**
+
+**1. Descenso con paso fijo (referencia)**
+Línea base $\boldsymbol\phi_{t+1} = \boldsymbol\phi_t - \alpha\nabla L$ sobre una función de pérdida con curvatura muy distinta en cada dimensión, motivando la necesidad de un tamaño de paso adaptativo por coordenada.
+
+**2. Gradientes normalizados**
+Actualización por coordenada $m_t=g_t$, $v_t=g_t^2$, $\boldsymbol\phi_{t+1}=\boldsymbol\phi_t-\alpha\, m_t/(\sqrt{v_t}+\epsilon)$. Cada dimensión avanza con un tamaño de paso ajustado a la magnitud de su propio gradiente, mitigando el problema de curvaturas desiguales.
+
+**3. Adam**
+Promedios móviles del gradiente y del gradiente al cuadrado, $m_t=\beta m_{t-1}+(1-\beta)g_t$ y $v_t=\gamma v_{t-1}+(1-\gamma)g_t^2$, con corrección de sesgo $\hat m_t = m_t/(1-\beta^t)$, $\hat v_t = v_t/(1-\gamma^t)$ — necesaria porque $m_0=v_0=0$ sesgan las primeras iteraciones hacia cero. Actualización final: $\boldsymbol\phi_{t+1}=\boldsymbol\phi_t-\alpha\,\hat m_t/(\sqrt{\hat v_t}+\epsilon)$.
+
+</details>
