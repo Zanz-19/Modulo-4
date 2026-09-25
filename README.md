@@ -1,3 +1,18 @@
+# Módulo 4 — Deep Learning
+
+Repositorio del Módulo 4 del curso de deep learning, organizado en tres carpetas por instructor:
+
+- **German** — matemáticas fundamentales de redes neuronales (funciones lineales, gradientes, optimizadores, convoluciones).
+- **Mario** — detección de objetos y segmentación semántica (COCO128/YOLO y Oxford-IIIT Pet/LR-ASPP).
+- **Antonio** — regularización y ensambles de redes (L2, dropout, early stopping, ensemble learning).
+
+Cada carpeta sigue el patrón `sin_resolver/` (notebooks o scripts originales) y `resueltos/` (con las soluciones agregadas), salvo Antonio, cuyos archivos ya estaban completos y por eso quedan planos, sin esa separación.
+
+---
+
+<details>
+<summary>👨‍🏫 German — Matemáticas Fundamentales</summary>
+
 # Deep Learning — Matemáticas Fundamentales
 
 El deep learning es una rama del machine learning que utiliza redes neuronales profundas para aprender representaciones jerárquicas de los datos. En lugar de definir reglas a mano, la red ajusta sus parámetros internos (pesos y sesgos) a través de optimización basada en gradientes, lo que le permite modelar relaciones complejas y no lineales en datos de cualquier tipo: imágenes, texto, audio, series de tiempo, etc.
@@ -357,5 +372,204 @@ Se añaden los recorridos sobre canal de entrada y canal de salida, acumulando l
 
 **4. Convolución completa (batch, multicanal, con paso)**
 Versión final que añade el recorrido sobre el tamaño de lote (batch), quedando equivalente a una capa `Conv2d` estándar. En los cuatro niveles, el error absoluto medio contra PyTorch fue del orden de $10^{-7}$, confirmando la correcta implementación.
+
+</details>
+</details>
+
+---
+
+<details>
+<summary>👨‍🏫 Mario — Detección de Objetos y Segmentación Semántica</summary>
+
+## Mario
+
+Dos series de laboratorios independientes entre sí, corridas en Google Colab (requieren GPU/descarga de datasets, por lo que no se ejecutaron localmente). Cada notebook descarga su propio dataset automáticamente: **COCO128** vía `ultralytics` en la Serie A, y **Oxford-IIIT Pet** vía `torchvision.datasets` en la Serie B.
+
+### 🅰️ Serie A — Detección de objetos (COCO128 / YOLO)
+
+#### 📘 `student (3).ipynb` — Dataset COCO128 y formato de etiquetas
+
+Notebook que introduce el formato de anotación YOLO y el dataset COCO128, decodificando etiquetas normalizadas a coordenadas de píxel a mano.
+
+**Temas cubiertos**
+
+**1. Conversión center-size → corners (Exercise E1)**
+Implementación de `center_size_to_corners`: convierte `(x_center, y_center, width, height)` normalizados en `[0,1]` a coordenadas de píxel `(x1, y1, x2, y2)`, verificada contra un ejemplo resuelto a mano.
+
+**2. Parseo y validación de una fila YOLO (Exercise E2)**
+Implementación de `decode_yolo_row`: separa y valida una línea de etiqueta YOLO, rechazando cantidad de campos incorrecta, clase fuera de rango, valores no finitos y tamaños no positivos, reutilizando la conversión de la E1.
+
+**3. Comparación de tres tareas de visión**
+Clasificación (una etiqueta por imagen) vs. segmentación semántica (una etiqueta por píxel) vs. detección (lista de cajas de longitud variable).
+
+**4. Inspección de predicciones reales y reporte de IoU**
+Corrida de un modelo YOLO preentrenado sobre imágenes reales de COCO128, comparando cajas predichas contra etiquetas reales (ground truth) y reportando el IoU con la mejor coincidencia de la misma clase.
+
+#### 📗 `student (2).ipynb` — IoU y pipelines de detección
+
+Notebook que implementa Intersection-over-Union de forma vectorizada y compara tres paradigmas de detección.
+
+**Temas cubiertos**
+
+**1. IoU vectorizado (Exercise E1)**
+Implementación de `box_iou_xyxy(a, b)`: acepta cajas individuales o arreglos, usa broadcasting de NumPy, y lanza `ValueError` ante cajas con ancho o alto no positivo. Validado contra casos borde (idénticas, disjuntas, tangentes, parcialmente superpuestas) y comportamiento vectorial por pares.
+
+**2. Comparación de tres pipelines de detección**
+Ventanas deslizantes (clasificador sobre muchos recortes) vs. detectores basados en propuestas (preseleccionan regiones) vs. detectores de una etapa (un solo pipeline de predicción compartido sobre todo el mapa de características).
+
+**3. Inspección de campos documentados de resultados reales**
+Lectura de `boxes.xyxy`, `boxes.conf` y `boxes.cls` de predicciones reales de Ultralytics sobre COCO128, evitando depender de layouts internos no documentados.
+
+#### 📙 `student (1).ipynb` — Pérdidas, sweep de umbrales y NMS
+
+Notebook centrado en cómo interactúan la pérdida de entrenamiento, el umbral de confianza y el umbral de IoU de NMS (Non-Max Suppression) en la salida final de un detector.
+
+**Temas cubiertos**
+
+**1. Pérdida ponderada de juguete (Exercise E1)**
+Combinación de `box_loss`, `cls_loss` y una pérdida de presencia conceptual con pesos `7.5 / 0.5 / 1.0` (convención de Ultralytics), e interpretación de qué mide (y qué no prueba) el resultado.
+
+**2. Sweep de confianza × IoU de NMS**
+Corrida de una grilla `confidence × nms_iou` sobre dos escenas controladas (`sparse` y `crowded`) y sobre imágenes reales de COCO128, comparando la predicción previa con el efecto observado: subir la confianza filtra más candidatos; subir el IoU de NMS permite más solapamiento y conserva más cajas.
+
+**3. NMS class-aware desde cero (Exercise E2)**
+Implementación de `class_aware_nms`: supresión greedy por clase, ordenando por score y suprimiendo cajas de la misma clase con IoU sobre el umbral. Verificado contra un caso resuelto a mano (`keep = [0, 2, 4]`) y su variante al cambiar la clase de una caja.
+
+#### 📕 `student.ipynb` — Evaluación: matching, precisión/recall y mAP
+
+Notebook de cierre de la serie: define cómo se decide si una predicción es un acierto (TP) o un error (FP) frente a las etiquetas reales, y construye las métricas estándar de evaluación de detección.
+
+**Temas cubiertos**
+
+**1. Matching uno-a-uno con razones explícitas**
+Procesamiento de predicciones de mayor a menor confianza; un TP exige misma clase, IoU ≥ 0.50, y una etiqueta real no reclamada aún. Cada FP recibe una razón explícita: duplicado, error de localización, confusión de clase, o fondo.
+
+**2. Precisión y recall puntuales**
+$\text{precisión} = TP/(TP+FP)$ (de lo reportado, cuánto es correcto) vs. $\text{recall} = TP/(TP+FN)$ (de lo real, cuánto se recuperó).
+
+**3. Tabla PR acumulativa y envolvente de interpolación**
+Construcción de precisión/recall acumulados por rango de confianza y de la envolvente de interpolación (`np.maximum.accumulate` sobre precisión invertida), base del cálculo de AP.
+
+**4. Split de entrenamiento/validación 96/32 con semilla fija**
+Partición determinística y reproducible de las 128 imágenes de COCO128, guardando manifiestos CSV que emparejan cada imagen con su etiqueta.
+
+**5. Validación real vs. fallback simulado**
+Evaluación real con el evaluador de Ultralytics (`mAP50`, `mAP50-95`) cuando hay COCO128 disponible; de lo contrario, un fallback con valores declarados para poder validar la lógica del notebook sin conexión.
+
+---
+
+### 🅱️ Serie B — Segmentación semántica (Oxford-IIIT Pet / LR-ASPP)
+
+#### 📓 `student (8).ipynb` — Etiquetado y remapeo del trimap
+
+Notebook introductorio: compara las tres formas de etiquetar una imagen (clase, caja, trimap) y prepara el trimap crudo de Oxford-IIIT Pet para supervisión de segmentación.
+
+**Temas cubiertos**
+
+**1. Tres formas de etiquetar una imagen**
+Etiqueta de clase (qué animal) vs. caja aproximada (dónde está, aproximadamente) vs. trimap (qué etiqueta va en cada píxel) — solo el trimap sirve para supervisar segmentación semántica.
+
+**2. Remapeo del trimap (Exercise E1)**
+Implementación de `remap_trimap`: convierte las etiquetas crudas del dataset (`1=pet, 2=background, 3=border`) a la convención del curso (`0=background, 1=pet, 255=border/ignore`), devolviendo un tensor `int64`.
+
+**3. Contrato de datos**
+Documentación explícita de las formas esperadas para una imagen de 128×128: entrada `[3, 128, 128]`, máscara objetivo `[128, 128]`, logits futuros `[2, 128, 128]`.
+
+#### 📓 `student (7).ipynb` — Preprocesamiento sincronizado imagen-máscara
+
+Notebook que construye el pipeline de preprocesamiento que mantiene alineadas una imagen y su máscara a través de resize y flip.
+
+**Temas cubiertos**
+
+**1. Resize con la interpolación correcta**
+La imagen RGB se redimensiona con interpolación bilineal; la máscara categórica con interpolación *nearest-neighbor*, para no inventar clases intermedias en los bordes.
+
+**2. Transformación sincronizada (`your code here`)**
+Implementación de `paired_transform`: aplica el mismo resize y **una sola decisión de flip** a imagen y máscara juntas, luego normaliza la imagen y remapea la máscara.
+
+**3. Auditoría de un batch**
+Verificación de que el `DataLoader` produce el contrato esperado por una pérdida de segmentación: imágenes `float32 [N,3,H,W]`, máscaras `int64 [N,H,W]`.
+
+**4. Forward pass con un modelo preentrenado**
+Inspección de cómo LR-ASPP (sin entrenar ni modificar) mapea un batch de imágenes a un mapa de logits por clase en cada posición de píxel.
+
+#### 📓 `student (6).ipynb` — Pérdidas por píxel (Session 3)
+
+Notebook enfocado en cómo calcular métricas de segmentación excluyendo correctamente los píxeles de borde ignorados.
+
+**Temas cubiertos**
+
+**1. De logits a máscara**
+Softmax + argmax sobre un mapa de logits `[batch, clases, H, W]` para obtener la predicción final por píxel.
+
+**2. Exclusión de bordes ignorados (`ignore_index=255`)**
+Los píxeles de borde (`255`) se excluyen tanto de la entropía cruzada como de toda métrica, porque no son ni fondo ni mascota.
+
+**3. Matriz de confusión acumulada (Exercise E1)**
+Implementación de `update_confusion` y `scores_from_confusion`: acumulan una matriz de confusión 2×2 (filas=real, columnas=predicho) sobre solo los píxeles válidos, y derivan exactitud y IoU por clase.
+
+**4. Ejemplo trabajado 4×4 de IoU de mascota (Exercise E2)**
+Cálculo manual de TP/FP/FN sobre una máscara pequeña con un píxel ignorado, verificando el resultado esperado: $IoU = 3/(3+1+1) = 0.60$.
+
+**5. Por qué la exactitud por píxel puede engañar**
+Ejemplo donde un modelo que predice todo como fondo logra 96% de exactitud sin detectar ni un solo píxel de la clase minoritaria (mascota), mostrando por qué el IoU por clase es la métrica que realmente importa en clases desbalanceadas.
+
+#### 📓 `student (5).ipynb` — Entrenamiento de la cabeza LR-ASPP (Session 4)
+
+Notebook que reemplaza la cabeza de clasificación de LR-ASPP, congela el backbone preentrenado, y ajusta solo la cabeza nueva para el problema de dos clases (fondo/mascota).
+
+**Temas cubiertos**
+
+**1. Split fijo de entrenamiento/validación**
+Partición reproducible (semilla 17) de 64 imágenes de entrenamiento y 24 de validación, sin solapamiento.
+
+**2. Reemplazo de la cabeza de salida**
+Sustitución de `classifier.low_classifier` y `classifier.high_classifier` (entrenados originalmente para clases de VOC) por convoluciones nuevas de 2 salidas.
+
+**3. Congelamiento intencional del backbone**
+Solo los parámetros de la cabeza nueva quedan con `requires_grad=True`; el optimizador recibe únicamente esos parámetros.
+
+**4. Línea base antes de entrenar**
+Medición de pérdida, exactitud e IoU de mascota antes de ajustar la cabeza, usando la misma matriz de confusión acumulada de la sesión anterior.
+
+**5. Fine-tuning de una época y guardado del checkpoint**
+Entrenamiento de la cabeza por una época, evaluación posterior, y guardado de un artefacto completo (`artifacts/session4_baseline.pt`) con pesos, splits, métricas y predicciones de validación, para que la siguiente notebook lo consuma sin tener que reentrenar.
+
+#### 📓 `student (4).ipynb` — Evaluación final (Session 5)
+
+Notebook de cierre de la serie: carga el checkpoint entrenado en la sesión anterior y produce un reporte de evaluación a nivel de dataset con evidencia visual.
+
+**Temas cubiertos**
+
+**1. Carga del checkpoint compartido**
+Carga de `artifacts/session4_baseline.pt` generado por `student (5).ipynb` y corrida de inferencia sobre el batch de validación. *(Corregido un bug de ruta: el archivo original apuntaba a `'session4_baseline.pt'` en la raíz en vez de `artifacts/session4_baseline.pt`, donde realmente se guarda.)*
+
+**2. Métricas a nivel de dataset (Exercise E1)**
+Acumulación de una matriz de confusión 2×2 sobre **todos** los píxeles válidos del batch de validación antes de calcular exactitud e IoU — nunca promediando IoUs por imagen, para no darle el mismo peso a una mascota diminuta que a una grande.
+
+**3. Selección de tres casos por regla**
+Selección determinística (no a ojo) del peor caso de IoU de mascota, y de los casos mediano y mejor entre los restantes.
+
+**4. Visualización de cinco paneles alineados (Exercise E2)**
+Implementación de `show_five_panels`: imagen original, máscara real, predicción, mapa de confianza de mascota, y overlay con transparencia — los cinco en la misma grilla de 128×128 píxeles.
+
+</details>
+
+---
+
+<details>
+<summary>👨‍🏫 Antonio — Regularización y Ensambles</summary>
+
+## Antonio
+
+A diferencia de German y Mario, estos archivos no traían ejercicios (`TODO`) por resolver — llegaron completos y funcionales, por lo que no hay separación `sin_resolver`/`resueltos`. Son apps de [marimo](https://marimo.io/) (no notebooks de Jupyter) que entrenan un MLP sobre un subconjunto de 3000 imágenes de FashionMNIST (2400 entrenamiento / 600 validación), explorando distintas técnicas de regularización.
+
+**Archivos**
+
+- **`l2_reg (2).py`** — Versión base: MLP simple con regularización L2 (`l2_lambda` fijo), 300 épocas sin early stopping.
+- **`l2_reg (1).py`** — Agrega *early stopping* por paciencia (`patience`) y guarda el checkpoint entrenado (`model.pth`) en `runs/l2_reg_{l2_lambda}_patience_{patience}_epochs_{num_epochs}/`.
+- **`l2_reg.py`** — Agrega además `Dropout` a la red, encima del early stopping. *(Nota: guarda sus checkpoints en una ruta con sufijo `_dropout_{dropout_rate}`, distinta a la que espera `ensemble.py`.)*
+- **`ensemble.py`** — Carga 5 modelos ya entrenados con distintas combinaciones de `l2_lambda`/`patience` (usando la ruta de checkpoint de `l2_reg (1).py`, sin dropout) y calcula la exactitud del ensamble promediando sus predicciones.
+- **`Backpropagation_Ejercicios_Solucionados.pdf`** — Ejercicios de backpropagation ya resueltos.
 
 </details>
